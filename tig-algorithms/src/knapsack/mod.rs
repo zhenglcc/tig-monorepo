@@ -195,7 +195,8 @@ pub use relative_raw_ultra as c003_a089;
 
 // c003_a092
 
-// c003_a093
+pub mod knapsack_redone;
+pub use knapsack_redone as c003_a093;
 
 // c003_a094
 

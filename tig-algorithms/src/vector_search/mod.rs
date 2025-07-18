@@ -133,7 +133,8 @@ pub use better_vector as c004_a057;
 
 // c004_a063
 
-// c004_a064
+pub mod improved_search_adp;
+pub use improved_search_adp as c004_a064;
 
 // c004_a065
 

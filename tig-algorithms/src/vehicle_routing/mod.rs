@@ -157,7 +157,8 @@ pub use enhanced_solomon as c002_a069;
 pub mod better_routing;
 pub use better_routing as c002_a072;
 
-// c002_a073
+pub mod routing_redone;
+pub use routing_redone as c002_a073;
 
 // c002_a074
 
