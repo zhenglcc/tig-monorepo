@@ -1,0 +1,31 @@
+<div class="p-4">
+  <p-table [value]="slaves()">
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Name</th>
+        <th>Online</th>
+        <th>Timeouts</th>
+        <th>Challenges</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-slave>
+      <tr>
+        <td>{{ slave.name }}</td>
+        <td>
+          <p-tag [value]="slave.online ? 'Online' : 'Offline'" [severity]="slave.online ? 'success' : 'danger'"></p-tag>
+        </td>
+        <td>{{ slave.timeout_count }}</td>
+        <td>
+          @if(slave.challenges.length === 0) {
+            <div>&mdash;</div>
+          }
+          @if(slave.challenges.length > 0) {
+            @for (ch of slave.challenges; track ch.challenge) {
+              <div>{{ ch.challenge }}: {{ ch.completed_batches }} (avg {{ ch.avg_time | number: '1.0-0' }}ms)</div>
+            }
+          }
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
