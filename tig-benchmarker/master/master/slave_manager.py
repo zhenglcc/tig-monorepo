@@ -96,6 +96,17 @@ class SlaveManager:
     def start(self):
         app = FastAPI()
 
+        def update_slave_status(slave_name: str):
+            now = int(time.time() * 1000)
+            get_db_conn().execute(
+                """
+                INSERT INTO slave_status (name, last_seen)
+                VALUES (%s, %s)
+                ON CONFLICT (name) DO UPDATE SET last_seen = EXCLUDED.last_seen
+                """,
+                (slave_name, now),
+            )
+
         @app.route('/get-batches', methods=['GET'])
         def get_batch(request: Request):
             if (slave_name := request.headers.get('User-Agent', None)) is None:
@@ -103,6 +114,8 @@ class SlaveManager:
             if not any(re.match(slave["name_regex"], slave_name) for slave in CONFIG["slaves"]):
                 logger.warning(f"slave {slave_name} does not match any regex. rejecting get-batch request")
                 raise HTTPException(status_code=403, detail="Unregistered slave")
+
+            update_slave_status(slave_name)
 
             slave = next((slave for slave in CONFIG["slaves"] if re.match(slave["name_regex"], slave_name)), None)
 
@@ -129,19 +142,36 @@ class SlaveManager:
                         b["start_time"] is None or
                         (now - b["start_time"]) > CONFIG["time_before_batch_retry"]
                     ):
+                        if (
+                            b["slave"] is not None
+                            and b["start_time"] is not None
+                            and (now - b["start_time"]) > CONFIG["time_before_batch_retry"]
+                        ):
+                            updates.append(
+                                (
+                                    """
+                                    UPDATE slave_status
+                                    SET timeout_count = timeout_count + 1
+                                    WHERE name = %s
+                                    """,
+                                    (b["slave"],),
+                                )
+                            )
                         b["slave"] = slave_name
                         b["start_time"] = now
                         table = "root_batch" if batch["sampled_nonces"] is None else "proofs_batch"
-                        updates.append((
-                            f"""
-                            UPDATE {table}
-                            SET slave = %s,
-                                start_time = %s
-                            WHERE benchmark_id = %s
-                                AND batch_idx = %s
-                            """,
-                            (slave_name, now, batch["benchmark_id"], batch["batch_idx"])
-                        ))
+                        updates.append(
+                            (
+                                f"""
+                                UPDATE {table}
+                                SET slave = %s,
+                                    start_time = %s
+                                WHERE benchmark_id = %s
+                                    AND batch_idx = %s
+                                """,
+                                (slave_name, now, batch["benchmark_id"], batch["batch_idx"])
+                            )
+                        )
                         concurrent.append(batch)
             if len(concurrent) == 0:
                 logger.debug(f"no batches available for {slave_name}")
@@ -153,6 +183,8 @@ class SlaveManager:
         async def submit_batch_root(batch_id: str, request: Request):
             if (slave_name := request.headers.get('User-Agent', None)) is None:
                 raise HTTPException(status_code=403, detail="User-Agent header is required")
+
+            update_slave_status(slave_name)
 
             with self.lock:
                 b = next((
@@ -237,6 +269,8 @@ class SlaveManager:
         async def submit_batch_proofs(batch_id: str, request: Request):
             if (slave_name := request.headers.get('User-Agent', None)) is None:
                 raise HTTPException(status_code=403, detail="User-Agent header is required")
+
+            update_slave_status(slave_name)
 
             with self.lock:
                 b = next((

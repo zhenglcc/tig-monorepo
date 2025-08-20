@@ -4,6 +4,7 @@ import signal
 import threading
 import uvicorn
 import json
+import time
 from datetime import datetime
 from master.sql import get_db_conn
 from fastapi import FastAPI, Query, Request, HTTPException, Depends, Header
@@ -247,10 +248,55 @@ class ClientManager:
             )
 
             return JSONResponse(
-                content=dict(result), 
+                content=dict(result),
                 status_code=200,
                 headers = {"Accept-Encoding": "gzip"}
             )
+
+        @self.app.get('/get-slave-stats')
+        async def get_slave_stats():
+            rows = get_db_conn().fetch_all(
+                """
+                WITH batch_times AS (
+                    SELECT slave, j.challenge, start_time, end_time
+                    FROM root_batch rb
+                    JOIN job j ON rb.benchmark_id = j.benchmark_id
+                    WHERE rb.start_time IS NOT NULL AND rb.end_time IS NOT NULL
+                    UNION ALL
+                    SELECT slave, j.challenge, start_time, end_time
+                    FROM proofs_batch pb
+                    JOIN job j ON pb.benchmark_id = j.benchmark_id
+                    WHERE pb.start_time IS NOT NULL AND pb.end_time IS NOT NULL
+                )
+                SELECT ss.name, ss.last_seen, ss.timeout_count, bt.challenge,
+                    AVG(bt.end_time - bt.start_time) AS avg_time,
+                    COUNT(bt.challenge) AS completed_batches
+                FROM slave_status ss
+                LEFT JOIN batch_times bt ON ss.name = bt.slave
+                GROUP BY ss.name, ss.last_seen, ss.timeout_count, bt.challenge
+                ORDER BY ss.name, bt.challenge
+                """
+            )
+            now = time.time() * 1000
+            data = {}
+            for row in rows:
+                name = row['name']
+                if name not in data:
+                    data[name] = {
+                        'name': name,
+                        'online': now - row['last_seen'] < 60000,
+                        'timeout_count': row['timeout_count'],
+                        'challenges': []
+                    }
+                if row['challenge'] is not None:
+                    data[name]['challenges'].append(
+                        {
+                            'challenge': row['challenge'],
+                            'avg_time': row['avg_time'],
+                            'completed_batches': row['completed_batches'],
+                        }
+                    )
+            return list(data.values())
 
     def start(self):
         def run():

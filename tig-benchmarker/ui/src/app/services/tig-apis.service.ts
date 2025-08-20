@@ -19,6 +19,8 @@ export class TigApisService {
   config$ = toObservable(this.config);
   benchmarks: any = signal([]);
   benchmarks$ = toObservable(this.benchmarks);
+  slaveStats: any = signal([]);
+  slaveStats$ = toObservable(this.slaveStats);
   constructor() {
     this.init();
   }
@@ -26,6 +28,7 @@ export class TigApisService {
   async init() {
     await this.getConfig();
     await this.getBenchmarks();
+    await this.getSlaveStats();
   }
 
   checkReady() {
@@ -109,6 +112,11 @@ export class TigApisService {
         })
       );
     }
+  }
+
+  async getSlaveStats() {
+    const result = (await axios.get('/get-slave-stats')).data;
+    this.slaveStats.set(result);
   }
 
   verifyBatch(batch: any) {

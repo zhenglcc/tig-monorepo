@@ -49,6 +49,12 @@ CREATE TABLE IF NOT EXISTS job_data (
     FOREIGN KEY (benchmark_id) REFERENCES job(benchmark_id)
 );
 
+CREATE TABLE IF NOT EXISTS slave_status (
+    name TEXT PRIMARY KEY,
+    last_seen BIGINT,
+    timeout_count INT DEFAULT 0
+);
+
 CREATE TABLE IF NOT EXISTS root_batch (
     benchmark_id TEXT,
     batch_idx INTEGER,
