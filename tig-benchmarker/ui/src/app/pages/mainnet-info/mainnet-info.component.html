@@ -1,0 +1,21 @@
+<p-card>
+  <h2>Mainnet Info</h2>
+  <div *ngIf="blockHeight() !== null">
+    <p>Block Height: {{ blockHeight() }}</p>
+  </div>
+  <p-table [value]="algorithms()">
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Algorithm</th>
+        <th>Base Frontier</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-algo>
+      <tr>
+        <td>{{ algo.algorithm_id }}</td>
+        <td>{{ algo.base_frontier }}</td>
+      </tr>
+    </ng-template>
+  </p-table>
+</p-card>
+
