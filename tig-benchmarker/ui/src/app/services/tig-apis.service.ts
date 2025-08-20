@@ -19,6 +19,8 @@ export class TigApisService {
   config$ = toObservable(this.config);
   benchmarks: any = signal([]);
   benchmarks$ = toObservable(this.benchmarks);
+  mainnetInfo: any = signal(null);
+  mainnetInfo$ = toObservable(this.mainnetInfo);
   constructor() {
     this.init();
   }
@@ -109,6 +111,11 @@ export class TigApisService {
         })
       );
     }
+  }
+
+  async getMainnetInfo() {
+    const result = (await axios.get('/get-mainnet-info')).data;
+    this.mainnetInfo.set(result);
   }
 
   verifyBatch(batch: any) {

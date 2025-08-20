@@ -50,6 +50,33 @@ class ClientManager:
         @self.app.get('/get-config')
         async def get_config_endpoint():
             return JSONResponse(content=CONFIG)
+
+        @self.app.get('/get-mainnet-info')
+        async def get_mainnet_info():
+            block_height = (
+                self.latest_data.get('block', {})
+                .get('details', {})
+                .get('height')
+            )
+            algorithms = []
+            for challenge_id, challenge in self.latest_data.get('challenges', {}).items():
+                block_data = challenge.get('block_data', {}) if isinstance(challenge, dict) else {}
+                base_frontier = block_data.get('base_frontier')
+                if base_frontier is None:
+                    continue
+                algorithm_id = challenge.get('id', challenge_id) if isinstance(challenge, dict) else challenge_id
+                algorithms.append(
+                    {
+                        'algorithm_id': algorithm_id,
+                        'base_frontier': base_frontier,
+                    }
+                )
+            return JSONResponse(
+                content={
+                    'block_height': block_height,
+                    'algorithms': algorithms,
+                }
+            )
         
         @self.app.get('/stop/{benchmark_id}')
         async def stop_benchmark(benchmark_id: str):
