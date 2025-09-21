@@ -24,7 +24,7 @@ class JobManager:
         benchmarks: Dict[str, Benchmark],
         proofs: Dict[str, Proof],
         challenges: Dict[str, Challenge],
-        algorithms: Dict[str, Algorithm],
+        algorithms: Dict[str, Code],
         binarys: Dict[str, Binary],
         **kwargs
     ):
@@ -67,10 +67,12 @@ class JobManager:
                 self.hash_thresholds[x.details.block_started] = {
                     c['id']: c['block_data']['hash_threshold']
                     for c in d["challenges"]
+                    if c['state']['round_active'] <= block.details.round
                 }
                 self.average_solution_ratio[x.details.block_started] = {
                     c['id']: c['block_data']['average_solution_ratio']
                     for c in d["challenges"]
+                    if c['state']['round_active'] <= block.details.round
                 }
             hash_threshold = self.hash_thresholds[x.details.block_started][x.settings.challenge_id]
             average_solution_ratio = self.average_solution_ratio[x.details.block_started][x.settings.challenge_id]
@@ -119,7 +121,7 @@ class JobManager:
                         x.details.num_nonces,
                         num_batches,
                         x.details.rand_hash,
-                        json.dumps(block.config["benchmarks"]["runtime_config"]),
+                        json.dumps(block.config["challenges"][x.settings.challenge_id]["benchmarks"]["runtime_config"]),
                         batch_size,
                         c_name,
                         a_name,
