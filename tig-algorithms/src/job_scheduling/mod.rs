@@ -12,7 +12,8 @@ pub use adaptive_js_v2 as c007_a005;
 
 // c007_a006
 
-// c007_a007
+pub mod job_two;
+pub use job_two as c007_a007;
 
 pub mod adaptive_js_v3;
 pub use adaptive_js_v3 as c007_a008;

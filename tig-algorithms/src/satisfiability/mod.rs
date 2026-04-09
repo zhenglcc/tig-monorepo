@@ -182,7 +182,8 @@ pub use sat_turbo_fix as c001_a078;
 
 // c001_a081
 
-// c001_a082
+pub mod sat_vanguard;
+pub use sat_vanguard as c001_a082;
 
 // c001_a083
 
