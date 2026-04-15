@@ -16,6 +16,7 @@ cudarc = { git = "https://github.com/tig-foundation/cudarc.git", branch = "runti
 ], optional = true }
 flate2 = "1.0"
 paste = "1.0.15"
+nalgebra = "0.33"
 ndarray = "0.15.6"
 rand = { version = "0.8.5", default-features = false, features = [
     "std_rng",
@@ -42,3 +43,5 @@ c006 = ["cudarc", "cudarc/cublas", "cudarc/cudnn"]
 neuralnet_optimizer = ["c006"]
 c007 = []
 job_scheduling = ["c007"]
+c008 = []
+energy_arbitrage = ["c008"]
